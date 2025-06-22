@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중국어 학습 앱</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .chinese-font {
+            font-family: serif, "SimSun", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="min-h-screen bg-gradient-to-br from-red-50 to-yellow-50 p-4">
+        <div class="max-w-2xl mx-auto">
+            <!-- 헤더 -->
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold text-red-600 mb-2 chinese-font">中文学习</h1>
+                <p class="text-lg text-gray-600">중국어 발음 학습 앱</p>
+            </div>
+
+            <!-- 문제 유형 선택 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <button id="btn-pinyin" class="py-3 px-4 rounded-lg font-semibold transition-all bg-red-500 text-white shadow-lg">
+                    한어병음 발음
+                </button>
+                <button id="btn-greeting" class="py-3 px-4 rounded-lg font-semibold transition-all bg-white text-red-500 border-2 border-red-500 hover:bg-red-50">
+                    인사말 번역
+                </button>
+                <button id="btn-character" class="py-3 px-4 rounded-lg font-semibold transition-all bg-white text-red-500 border-2 border-red-500 hover:bg-red-50">
+                    한자 발음
+                </button>
+            </div>
+
+            <!-- 학습 모드 선택 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <button id="btn-all" class="py-2 px-4 rounded-lg font-semibold transition-all bg-blue-500 text-white shadow-lg">
+                    전체 학습 (<span id="count-all">0</span>문제)
+                </button>
+                <button id="btn-known" class="py-2 px-4 rounded-lg font-semibold transition-all bg-white text-green-500 border-2 border-green-500 hover:bg-green-50">
+                    아는 문제 (<span id="count-known">0</span>문제)
+                </button>
+                <button id="btn-unknown" class="py-2 px-4 rounded-lg font-semibold transition-all bg-white text-orange-500 border-2 border-orange-500 hover:bg-orange-50">
+                    모르는 문제 (<span id="count-unknown">0</span>문제)
+                </button>
+            </div>
+
+            <!-- 퀴즈 카드 -->
+            <div class="bg-white rounded-xl shadow-xl p-8 mb-6">
+                <div class="text-center mb-8">
+                    <div class="text-sm text-gray-500 mb-2" id="progress">
+                        라운드 1 - 문제 1 / 1
+                    </div>
+                    
+                    <!-- 문제 내용 -->
+                    <div id="question-content">
+                        <!-- 동적으로 생성됨 -->
+                    </div>
+
+                    <!-- 정답 발음 듣기 버튼 -->
+                    <button id="btn-audio" class="inline-flex items-center gap-2 bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors mb-4 text-lg font-semibold">
+                        🔊 전문가 중국어 발음 듣기
+                    </button>
+
+                    <!-- 한어병음 보기 버튼 -->
+                    <div id="pinyin-toggle" class="mb-4" style="display: none;">
+                        <button id="btn-show-pinyin" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors mr-2 text-white bg-blue-500 hover:bg-blue-600">
+                            👁 한어병음 보기
+                        </button>
+                        <div id="pinyin-display" class="mt-2 text-2xl text-purple-600 font-bold" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <!-- 버튼들 -->
+                <div class="flex gap-4 justify-center">
+                    <!-- 알아요/몰라요 버튼 -->
+                    <div class="flex gap-2 mb-4">
+                        <button id="btn-known-answer" class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 transition-colors">
+                            ✓ 알아요
+                        </button>
+                        <button id="btn-unknown-answer" class="bg-orange-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-orange-600 transition-colors">
+                            ✗ 몰라요
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex gap-4 justify-center">
+                    <button id="btn-next" class="bg-blue-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors">
+                        다음 문제
+                    </button>
+                    
+                    <button id="btn-reset" class="inline-flex items-center gap-2 bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-600 transition-colors">
+                        🔄 처음부터
+                    </button>
+                </div>
+            </div>
+
+            <!-- 사용법 안내 -->
+            <div class="bg-white rounded-lg p-6 shadow-md">
+                <h3 class="text-lg font-semibold mb-3 text-red-600">사용법 및 음성 기능</h3>
+                <div class="text-sm text-gray-600 space-y-2">
+                    <p><strong>학습 방식:</strong></p>
+                    <ul class="ml-4 space-y-1">
+                        <li>• 모든 문제가 한 번씩 나올 때까지 랜덤 순서로 출제</li>
+                        <li>• 한 라운드 완료 후 다시 셔플되어 새로운 랜덤 순서로 반복</li>
+                        <li>• 같은 라운드 내에서는 중복 문제 없음</li>
+                    </ul>
+                    <p><strong>학습 모드:</strong></p>
+                    <ul class="ml-4 space-y-1">
+                        <li>• <strong>전체 학습:</strong> 모든 문제를 학습합니다</li>
+                        <li>• <strong>아는 문제:</strong> "알아요"로 표시한 문제만 학습합니다</li>
+                        <li>• <strong>모르는 문제:</strong> "몰라요"로 표시한 문제만 학습합니다</li>
+                    </ul>
+                    <p><strong>알아요/몰라요 버튼:</strong> 각 문제에 대한 이해도를 표시하고 자동으로 다음 문제로 넘어갑니다.</p>
+                    <p><strong>한어병음 발음:</strong> 주어진 한어병음(성조 포함)을 보고 해당하는 중국어 발음을 들어보세요.</p>
+                    <p><strong>성조 학습:</strong> 중국어의 4가지 성조(1성:ˉ, 2성:ˊ, 3성:ˇ, 4성:ˋ)가 표시되어 정확한 발음 학습이 가능합니다.</p>
+                    <p><strong>인사말 번역:</strong> 한국어 인사말에 해당하는 중국어 발음을 들어보세요.</p>
+                    <p><strong>한자 발음:</strong> 한자를 보고 중국어식 발음(한어병음)을 맞춰보세요. 예: 好 → hao</p>
+                    <p><strong>음성 기능:</strong> 브라우저 내장 음성 합성 엔진(Web Speech API)을 사용하여 중국어 발음을 재생합니다.</p>
+                    <p><strong>한어병음 보기:</strong> 인사말 모드와 한자 모드에서 힌트로 한어병음을 확인할 수 있습니다.</p>
+                    <p class="text-xs text-gray-500 mt-2">
+                        ※ 음성 품질은 사용하는 브라우저와 운영체제에 따라 다를 수 있습니다. Chrome, Edge 등에서 더 자연스러운 중국어 발음을 제공합니다.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 앱 상태
+        let currentMode = 'pinyin';
+        let studyMode = 'all';
+        let currentQuestion = 0;
+        let showPinyin = false;
+        let knownQuestions = new Set();
+        let unknownQuestions = new Set();
+        let shuffledQuestions = [];
+        let completedQuestions = new Set();
+        let roundCount = 1;
+
+        // 문제 데이터
+        const pinyinQuestions = [
+            { pinyin: 'fēi jī', chinese: '飞机', korean: '비행기', audio: 'fei-ji' },
+            { pinyin: 'gōng yuán', chinese: '公园', korean: '공원', audio: 'gong-yuan' },
+            { pinyin: 'gōng zhǔ', chinese: '公主', korean: '공주', audio: 'gong-zhu' },
+            { pinyin: 'shēng rì', chinese: '生日', korean: '생일', audio: 'sheng-ri' },
+            { pinyin: 'gē ge', chinese: '哥哥', korean: '형/오빠', audio: 'ge-ge' },
+            { pinyin: 'xióng māo', chinese: '熊猫', korean: '판다', audio: 'xiong-mao' },
+            { pinyin: 'qí páo', chinese: '旗袍', korean: '치파오', audio: 'qi-pao' },
+            { pinyin: 'nán nǚ', chinese: '男女', korean: '남녀', audio: 'nan-nu' },
+            { pinyin: 'xué xiào', chinese: '学校', korean: '학교', audio: 'xue-xiao' },
+            { pinyin: 'yé ye', chinese: '爷爷', korean: '할아버지', audio: 'ye-ye' },
+            { pinyin: 'lǎo shī', chinese: '老师', korean: '선생님', audio: 'lao-shi' },
+            { pinyin: 'měi guó', chinese: '美国', korean: '미국', audio: 'mei-guo' },
+            { pinyin: 'shuǐ guǒ', chinese: '水果', korean: '과일', audio: 'shui-guo' },
+            { pinyin: 'nǔ lì', chinese: '努力', korean: '노력하다', audio: 'nu-li' },
+            { pinyin: 'jiě jie', chinese: '姐姐', korean: '누나/언니', audio: 'jie-jie' },
+            { pinyin: 'chàng gē', chinese: '唱歌', korean: '노래하다', audio: 'chang-ge' },
+            { pinyin: 'tài yáng', chinese: '太阳', korean: '태양', audio: 'tai-yang' },
+            { pinyin: 'fù mǔ', chinese: '父母', korean: '부모', audio: 'fu-mu' },
+            { pinyin: 'diàn huà', chinese: '电话', korean: '전화', audio: 'dian-hua' },
+            { pinyin: 'mèi mei', chinese: '妹妹', korean: '여동생', audio: 'mei-mei' },
+            { pinyin: 'hēi bǎn', chinese: '黑板', korean: '칠판', audio: 'hei-ban' },
+            { pinyin: 'diàn nǎo', chinese: '电脑', korean: '컴퓨터', audio: 'dian-nao' },
+            { pinyin: 'zhuō zi', chinese: '桌子', korean: '책상', audio: 'zhuo-zi' },
+            { pinyin: 'bāo', chinese: '包', korean: '가방', audio: 'bao' },
+            { pinyin: 'yǐ zi', chinese: '椅子', korean: '의자', audio: 'yi-zi' },
+            { pinyin: 'niú nǎi', chinese: '牛奶', korean: '우유', audio: 'niu-nai' },
+            { pinyin: 'yī', chinese: '一', korean: '1', audio: 'yi' },
+            { pinyin: 'èr', chinese: '二', korean: '2', audio: 'er' },
+            { pinyin: 'sān', chinese: '三', korean: '3', audio: 'san' },
+            { pinyin: 'sì', chinese: '四', korean: '4', audio: 'si' },
+            { pinyin: 'wǔ', chinese: '五', korean: '5', audio: 'wu' },
+            { pinyin: 'liù', chinese: '六', korean: '6', audio: 'liu' },
+            { pinyin: 'qī', chinese: '七', korean: '7', audio: 'qi' },
+            { pinyin: 'bā', chinese: '八', korean: '8', audio: 'ba' },
+            { pinyin: 'jiǔ', chinese: '九', korean: '9', audio: 'jiu' },
+            { pinyin: 'shí', chinese: '十', korean: '10', audio: 'shi' },
+            { pinyin: 'dōng xī nán běi', chinese: '东西南北', korean: '동서남북', audio: 'dong-xi-nan-bei' },
+            { pinyin: 'wǔ xīng hóng qí', chinese: '五星红旗', korean: '오성홍기', audio: 'wu-xing-hong-qi' },
+            { pinyin: 'nǐ', chinese: '你', korean: '너/당신', audio: 'ni' },
+            { pinyin: 'hǎo', chinese: '好', korean: '좋다/안녕하다', audio: 'hao' },
+            { pinyin: 'nǐ men', chinese: '你们', korean: '너희(들)', audio: 'ni-men' },
+            { pinyin: 'jiàn miàn', chinese: '见面', korean: '만나다/보다', audio: 'jian-mian' },
+            { pinyin: 'nín', chinese: '您', korean: '당신의 존칭', audio: 'nin' },
+            { pinyin: 'dà jiā', chinese: '大家', korean: '여러분/모두들', audio: 'da-jia' },
+            { pinyin: 'wǒ', chinese: '我', korean: '나', audio: 'wo' },
+            { pinyin: 'wǒ men', chinese: '我们', korean: '우리들', audio: 'wo-men' },
+            { pinyin: 'tā', chinese: '他', korean: '그', audio: 'ta' },
+            { pinyin: 'tā men', chinese: '他们', korean: '그들', audio: 'ta-men' },
+            { pinyin: 'tā', chinese: '她', korean: '그녀', audio: 'ta2' },
+            { pinyin: 'tā men', chinese: '她们', korean: '그녀들', audio: 'ta-men2' }
+        ];
+
+        const characterQuestions = [
+            { chinese: '好', pinyin: 'hǎo', korean: '좋다', audio: 'hao' },
+            { chinese: '不', pinyin: 'bù', korean: '~이 아니다', audio: 'bu' }
+        ];
+
+        const greetingQuestions = [
+            { korean: '안녕!', chinese: '你好!', pinyin: 'nǐ hǎo!', audio: 'ni-hao' },
+            { korean: '얘들아 안녕!', chinese: '你们好!', pinyin: 'nǐ men hǎo!', audio: 'ni-men-hao' },
+            { korean: '잘가!', chinese: '再见!', pinyin: 'zài jiàn!', audio: 'zai-jian' },
+            { korean: '내일 보자!', chinese: '明天见!', pinyin: 'míng tiān jiàn!', audio: 'ming-tian-jian' },
+            { korean: '좋은 아침!', chinese: '早上好!', pinyin: 'zǎo shàng hǎo!', audio: 'zao-shang-hao' },
+            { korean: '좋은 저녁!', chinese: '晚上好!', pinyin: 'wǎn shàng hǎo!', audio: 'wan-shang-hao' },
+            { korean: '잘자!', chinese: '晚安!', pinyin: 'wǎn ān!', audio: 'wan-an' },
+            { korean: '만나서 반갑습니다!', chinese: '很高兴认识你!', pinyin: 'hěn gāo xìng rèn shi nǐ!', audio: 'hen-gao-xing-ren-shi-ni' },
+            { korean: '오랜만이야!', chinese: '认识你很高兴!', pinyin: 'rèn shi nǐ hěn gāo xìng!', audio: 'ren-shi-ni-hen-gao-xing' },
+            { korean: '어서오세요/오신걸 환영합니다.', chinese: '欢迎光临!', pinyin: 'huān yíng guāng lín!', audio: 'huan-ying-guang-lin' },
+            { korean: '살펴가세요!', chinese: '慢走!', pinyin: 'màn zǒu!', audio: 'man-zou' },
+            { korean: '다음에 보자!', chinese: '下次见!', pinyin: 'xià cì jiàn!', audio: 'xia-ci-jian' },
+            { korean: '잠시후에 보자!', chinese: '一会儿见!', pinyin: 'yī huì ér jiàn!', audio: 'yi-hui-er-jian' }
+        ];
+
+        // 유틸리티 함수
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function getCurrentData() {
+            if (currentMode === 'pinyin') return pinyinQuestions;
+            if (currentMode === 'greeting') return greetingQuestions;
+            return characterQuestions;
+        }
+
+        function getFilteredQuestions() {
+            const currentData = getCurrentData();
+            const dataKey = currentMode;
+            
+            if (studyMode === 'known') {
+                return currentData.filter((_, index) => knownQuestions.has(dataKey + '-' + index));
+            } else if (studyMode === 'unknown') {
+                return currentData.filter((_, index) => unknownQuestions.has(dataKey + '-' + index));
+            }
+            return currentData;
+        }
+
+        function playAudio(text) {
+            if ('speechSynthesis' in window) {
+                // 이전 음성 재생 중단
+                speechSynthesis.cancel();
+                
+                // 모바일 브라우저 감지
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                
+                // 음성 재생 함수
+                function speakText() {
+                    const voices = speechSynthesis.getVoices();
+                    
+                    // 중국어 전문 음성 찾기
+                    const chineseVoices = voices.filter(voice => 
+                        voice.lang.includes('zh') || 
+                        voice.lang.includes('Chinese') ||
+                        voice.name.includes('Chinese') ||
+                        voice.name.includes('Mandarin')
+                    );
+                    
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    
+                    // 최적의 중국어 음성 선택
+                    if (chineseVoices.length > 0) {
+                        const preferredVoice = chineseVoices.find(voice => 
+                            voice.lang === 'zh-CN' && voice.name.includes('Female')
+                        ) || chineseVoices.find(voice => 
+                            voice.lang === 'zh-CN'
+                        ) || chineseVoices.find(voice => 
+                            voice.lang.includes('zh')
+                        ) || chineseVoices[0];
+                        
+                        utterance.voice = preferredVoice;
+                    }
+                    
+                    // 모바일 최적화 설정
+                    utterance.lang = 'zh-CN';
+                    utterance.rate = isMobile ? 0.8 : 0.7;  // 모바일에서 조금 더 빠르게
+                    utterance.pitch = 1.0;
+                    utterance.volume = 1.0;  // 모바일에서 최대 볼륨
+                    
+                    // iOS 특별 처리
+                    if (isIOS) {
+                        utterance.rate = 0.9;
+                        utterance.volume = 0.8;
+                    }
+                    
+                    // 재생 이벤트 처리
+                    utterance.onstart = function() {
+                        console.log('🔊 중국어 음성 재생 시작 (모바일)');
+                    };
+                    
+                    utterance.onend = function() {
+                        console.log('✅ 음성 재생 완료');
+                    };
+                    
+                    utterance.onerror = function(event) {
+                        console.error('❌ 음성 재생 오류:', event.error);
+                        
+                        // 오류 시 재시도 (모바일에서 흔함)
+                        setTimeout(() => {
+                            console.log('🔄 음성 재생 재시도...');
+                            speechSynthesis.cancel();
+                            const retryUtterance = new SpeechSynthesisUtterance(text);
+                            retryUtterance.lang = 'zh-CN';
+                            retryUtterance.rate = 0.8;
+                            retryUtterance.volume = 1.0;
+                            speechSynthesis.speak(retryUtterance);
+                        }, 100);
+                    };
+                    
+                    // 음성 재생
+                    speechSynthesis.speak(utterance);
+                    
+                    // iOS에서 음성이 멈추는 문제 해결
+                    if (isIOS) {
+                        const interval = setInterval(() => {
+                            if (!speechSynthesis.speaking) {
+                                clearInterval(interval);
+                            } else {
+                                speechSynthesis.pause();
+                                speechSynthesis.resume();
+                            }
+                        }, 14000); // 14초마다 재시작
+                        
+                        utterance.onend = function() {
+                            clearInterval(interval);
+                        };
+                    }
+                }
+                
+                // 음성 목록이 로드되지 않은 경우 대기
+                if (speechSynthesis.getVoices().length === 0) {
+                    speechSynthesis.onvoiceschanged = function() {
+                        speechSynthesis.onvoiceschanged = null;
+                        speakText();
+                    };
+                } else {
+                    speakText();
+                }
+                
+            } else {
+                // 대체 방법 제안 (Web Speech API 미지원 시)
+                alert('이 브라우저에서는 음성 재생이 지원되지 않습니다.\n\n대안:\n1. Chrome 브라우저 사용\n2. Safari 최신 버전 사용\n3. 설정 → 접근성 → 음성 확인');
+            }
+        }
+
+        // 모바일에서 음성 엔진 초기화 함수
+        function initializeMobileAudio() {
+            if ('speechSynthesis' in window) {
+                // 더미 음성으로 초기화 (사용자 터치 후)
+                const dummyUtterance = new SpeechSynthesisUtterance('');
+                dummyUtterance.volume = 0;
+                speechSynthesis.speak(dummyUtterance);
+                console.log('📱 모바일 음성 엔진 초기화 완료');
+            }
+        }
+
+        // 음성 목록이 로드될 때까지 기다리는 함수
+        function loadVoices() {
+            return new Promise((resolve) => {
+                const voices = speechSynthesis.getVoices();
+                if (voices.length > 0) {
+                    resolve(voices);
+                } else {
+                    speechSynthesis.onvoiceschanged = () => {
+                        resolve(speechSynthesis.getVoices());
+                    };
+                }
+            });
+        }
+
+        function updateQuestionCounts() {
+            const currentData = getCurrentData();
+            const dataKey = currentMode;
+            
+            const knownCount = currentData.filter((_, index) => knownQuestions.has(dataKey + '-' + index)).length;
+            const unknownCount = currentData.filter((_, index) => unknownQuestions.has(dataKey + '-' + index)).length;
+            
+            document.getElementById('count-all').textContent = currentData.length;
+            document.getElementById('count-known').textContent = knownCount;
+            document.getElementById('count-unknown').textContent = unknownCount;
+        }
+
+        function initializeShuffledQuestions() {
+            const filteredQuestions = getFilteredQuestions();
+            if (filteredQuestions.length > 0) {
+                shuffledQuestions = shuffleArray(filteredQuestions.map((item, index) => ({ item, originalIndex: index })));
+                currentQuestion = 0;
+                completedQuestions = new Set();
+                roundCount = 1;
+            } else {
+                shuffledQuestions = [];
+            }
+        }
+
+        function renderQuestion() {
+            const questionContent = document.getElementById('question-content');
+            const pinyinToggle = document.getElementById('pinyin-toggle');
+            const progress = document.getElementById('progress');
+            
+            if (shuffledQuestions.length === 0) {
+                questionContent.innerHTML = '<div class="text-lg text-gray-600">해당 문제가 없습니다.</div>';
+                progress.textContent = '문제 없음';
+                pinyinToggle.style.display = 'none';
+                return;
+            }
+
+            const currentItem = shuffledQuestions[currentQuestion].item;
+            progress.textContent = '라운드 ' + roundCount + ' - 문제 ' + (completedQuestions.size + 1) + ' / ' + shuffledQuestions.length;
+
+            if (currentMode === 'pinyin') {
+                questionContent.innerHTML = 
+                    '<div class="text-4xl font-bold text-gray-800 mb-4">' + currentItem.pinyin + '</div>' +
+                    '<p class="text-lg text-gray-600 mb-6">위 한어병음의 발음을 들어보세요</p>' +
+                    '<div class="bg-gray-50 p-4 rounded-lg mb-4">' +
+                        '<div class="text-2xl font-bold text-red-600 mb-2 chinese-font">' + currentItem.chinese + '</div>' +
+                        '<div class="text-lg text-gray-600">' + currentItem.korean + '</div>' +
+                    '</div>';
+                pinyinToggle.style.display = 'none';
+            } else if (currentMode === 'greeting') {
+                questionContent.innerHTML = 
+                    '<div class="text-3xl font-bold text-blue-600 mb-4">"' + currentItem.korean + '"</div>' +
+                    '<p class="text-lg text-gray-600 mb-6">위 한국어의 중국어 발음을 들어보세요</p>' +
+                    '<div class="bg-gray-50 p-4 rounded-lg mb-4">' +
+                        '<div class="text-2xl font-bold text-red-600 chinese-font">' + currentItem.chinese + '</div>' +
+                    '</div>';
+                pinyinToggle.style.display = 'block';
+                document.getElementById('btn-show-pinyin').textContent = '👁 한어병음 ' + (showPinyin ? '숨기기' : '보기');
+                document.getElementById('pinyin-display').textContent = currentItem.pinyin;
+                document.getElementById('pinyin-display').style.display = showPinyin ? 'block' : 'none';
+            } else { // character
+                questionContent.innerHTML = 
+                    '<div class="text-6xl font-bold text-gray-800 mb-4 chinese-font">' + currentItem.chinese + '</div>' +
+                    '<p class="text-lg text-gray-600 mb-6">위 한자의 중국어 발음을 들어보세요</p>' +
+                    '<div class="bg-gray-50 p-4 rounded-lg mb-4">' +
+                        '<div class="text-lg text-gray-600">뜻: ' + currentItem.korean + '</div>' +
+                    '</div>';
+                pinyinToggle.style.display = 'block';
+                document.getElementById('btn-show-pinyin').textContent = '👁 발음 ' + (showPinyin ? '숨기기' : '보기');
+                document.getElementById('pinyin-display').textContent = currentItem.pinyin;
+                document.getElementById('pinyin-display').style.display = showPinyin ? 'block' : 'none';
+            }
+        }
+
+        function nextQuestion() {
+            if (shuffledQuestions.length <= 1) return;
+            
+            const currentQuestionIndex = currentQuestion;
+            completedQuestions.add(currentQuestionIndex);
+            
+            if (completedQuestions.size >= shuffledQuestions.length) {
+                const newShuffled = shuffleArray([...shuffledQuestions]);
+                shuffledQuestions = newShuffled;
+                currentQuestion = 0;
+                completedQuestions = new Set();
+                roundCount++;
+            } else {
+                let nextIndex = (currentQuestion + 1) % shuffledQuestions.length;
+                while (completedQuestions.has(nextIndex) && completedQuestions.size < shuffledQuestions.length - 1) {
+                    nextIndex = (nextIndex + 1) % shuffledQuestions.length;
+                }
+                currentQuestion = nextIndex;
+            }
+            
+            showPinyin = false;
+            renderQuestion();
+        }
+
+        function markAsKnown() {
+            if (shuffledQuestions.length === 0) return;
+            const originalIndex = shuffledQuestions[currentQuestion].originalIndex;
+            const questionKey = currentMode + '-' + originalIndex;
+            knownQuestions.add(questionKey);
+            unknownQuestions.delete(questionKey);
+            updateQuestionCounts();
+            nextQuestion();
+        }
+
+        function markAsUnknown() {
+            if (shuffledQuestions.length === 0) return;
+            const originalIndex = shuffledQuestions[currentQuestion].originalIndex;
+            const questionKey = currentMode + '-' + originalIndex;
+            unknownQuestions.add(questionKey);
+            knownQuestions.delete(questionKey);
+            updateQuestionCounts();
+            nextQuestion();
+        }
+
+        function resetQuiz() {
+            initializeShuffledQuestions();
+            showPinyin = false;
+            renderQuestion();
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // 버튼 스타일 업데이트
+            document.querySelectorAll('[id^="btn-"]:not([id^="btn-all"]):not([id^="btn-known"]):not([id^="btn-unknown"])').forEach(btn => {
+                btn.className = btn.className.replace(/bg-red-500 text-white shadow-lg/, 'bg-white text-red-500 border-2 border-red-500 hover:bg-red-50');
+            });
+            document.getElementById('btn-' + mode).className = document.getElementById('btn-' + mode).className.replace(/bg-white text-red-500 border-2 border-red-500 hover:bg-red-50/, 'bg-red-500 text-white shadow-lg');
+            
+            updateQuestionCounts();
+            resetQuiz();
+        }
+
+        function switchStudyMode(mode) {
+            studyMode = mode;
+            
+            // 버튼 스타일 업데이트
+            document.getElementById('btn-all').className = mode === 'all' ? 'py-2 px-4 rounded-lg font-semibold transition-all bg-blue-500 text-white shadow-lg' : 'py-2 px-4 rounded-lg font-semibold transition-all bg-white text-blue-500 border-2 border-blue-500 hover:bg-blue-50';
+            document.getElementById('btn-known').className = mode === 'known' ? 'py-2 px-4 rounded-lg font-semibold transition-all bg-green-500 text-white shadow-lg' : 'py-2 px-4 rounded-lg font-semibold transition-all bg-white text-green-500 border-2 border-green-500 hover:bg-green-50';
+            document.getElementById('btn-unknown').className = mode === 'unknown' ? 'py-2 px-4 rounded-lg font-semibold transition-all bg-orange-500 text-white shadow-lg' : 'py-2 px-4 rounded-lg font-semibold transition-all bg-white text-orange-500 border-2 border-orange-500 hover:bg-orange-50';
+            
+            resetQuiz();
+        }
+
+        // 이벤트 리스너
+        document.getElementById('btn-pinyin').addEventListener('click', () => switchMode('pinyin'));
+        document.getElementById('btn-greeting').addEventListener('click', () => switchMode('greeting'));
+        document.getElementById('btn-character').addEventListener('click', () => switchMode('character'));
+        
+        document.getElementById('btn-all').addEventListener('click', () => switchStudyMode('all'));
+        document.getElementById('btn-known').addEventListener('click', () => switchStudyMode('known'));
+        document.getElementById('btn-unknown').addEventListener('click', () => switchStudyMode('unknown'));
+        
+        document.getElementById('btn-audio').addEventListener('click', () => {
+            if (shuffledQuestions.length > 0) {
+                // 모바일에서 첫 번째 터치 시 음성 엔진 초기화
+                initializeMobileAudio();
+                playAudio(shuffledQuestions[currentQuestion].item.chinese);
+            }
+        });
+        
+        document.getElementById('btn-show-pinyin').addEventListener('click', () => {
+            showPinyin = !showPinyin;
+            renderQuestion();
+        });
+        
+        document.getElementById('btn-known-answer').addEventListener('click', markAsKnown);
+        document.getElementById('btn-unknown-answer').addEventListener('click', markAsUnknown);
+        document.getElementById('btn-next').addEventListener('click', nextQuestion);
+        document.getElementById('btn-reset').addEventListener('click', resetQuiz);
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 음성 목록 로드 대기
+            await loadVoices();
+            
+            // 사용 가능한 중국어 음성 확인 및 로그
+            const voices = speechSynthesis.getVoices();
+            const chineseVoices = voices.filter(voice => 
+                voice.lang.includes('zh') || 
+                voice.lang.includes('Chinese') ||
+                voice.name.includes('Chinese') ||
+                voice.name.includes('Mandarin')
+            );
+            
+            console.log('사용 가능한 중국어 음성:', chineseVoices.map(v => ({
+                name: v.name,
+                lang: v.lang,
+                gender: v.name.includes('Female') ? 'Female' : v.name.includes('Male') ? 'Male' : 'Unknown'
+            })));
+            
+            if (chineseVoices.length > 0) {
+                console.log('✅ 고품질 중국어 음성이 감지되었습니다.');
+            } else {
+                console.log('⚠️ 전용 중국어 음성을 찾을 수 없습니다. 기본 음성을 사용합니다.');
+            }
+            
+            updateQuestionCounts();
+            resetQuiz();
+        });
+    </script>
+</body>
+</html>
